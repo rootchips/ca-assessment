@@ -39,44 +39,14 @@
       @sort="sort"
     />
 
-    <div v-if="showDataSection" class="mt-4 flex items-center justify-between text-sm">
-      <p class="text-slate-500 dark:text-slate-300">
-        Showing page {{ store.meta.current_page }} of {{ store.meta.last_page }} ({{ store.meta.total }} records)
-      </p>
-
-      <div class="flex items-center gap-2">
-        <button
-          class="cursor-pointer rounded-lg border border-slate-300 px-3 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:hover:bg-slate-700"
-          :disabled="store.loading || store.meta.current_page <= 1"
-          @click="store.fetchProducts(store.meta.current_page - 1)"
-        >
-          Prev
-        </button>
-
-        <button
-          v-for="page in pages"
-          :key="page"
-          class="cursor-pointer rounded-lg border px-3 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-slate-700"
-          :class="
-            page === store.meta.current_page
-              ? 'border-[#04C968] bg-[#04C968] text-white'
-              : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100'
-          "
-          :disabled="store.loading"
-          @click="store.fetchProducts(page)"
-        >
-          {{ page }}
-        </button>
-
-        <button
-          class="cursor-pointer rounded-lg border border-slate-300 px-3 py-1.5 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:hover:bg-slate-700"
-          :disabled="store.loading || store.meta.current_page >= store.meta.last_page"
-          @click="store.fetchProducts(store.meta.current_page + 1)"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+    <Pagination
+      v-if="showDataSection"
+      :loading="store.loading"
+      :current-page="Number(store.meta.current_page || 1)"
+      :last-page="Number(store.meta.last_page || 1)"
+      :total="Number(store.meta.total || 0)"
+      @go-to-page="store.fetchProducts"
+    />
 
     <ProductsEmptyState v-else />
   </section>
@@ -105,6 +75,7 @@ import UploadDropzone from '@/components/products/UploadDropzone.vue'
 import ProductFilters from '@/components/products/ProductFilters.vue'
 import ProductsTable from '@/components/products/ProductsTable.vue'
 import ProductsEmptyState from '@/components/products/ProductsEmptyState.vue'
+import Pagination from '@/components/Pagination.vue'
 import AlertModal from '@/components/AlertModal.vue'
 import ToastStack from '@/components/ToastStack.vue'
 
@@ -123,21 +94,6 @@ let toastSeed = 0
 const sort = async (column) => {
   await store.applySorting(column)
 }
-
-const pages = computed(() => {
-  const total = Number(store.meta.last_page ?? 1)
-  const current = Number(store.meta.current_page ?? 1)
-
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, index) => index + 1)
-  }
-
-  const start = Math.max(1, current - 2)
-  const end = Math.min(total, start + 4)
-  const normalizedStart = Math.max(1, end - 4)
-
-  return Array.from({ length: end - normalizedStart + 1 }, (_, index) => normalizedStart + index)
-})
 
 const showDataSection = computed(() => {
   const total = Number(store.meta.total ?? 0)
